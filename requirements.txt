@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+crawl4ai
+langchain-openai
+langchain-core
+python-dotenv
+pydantic
+playwright

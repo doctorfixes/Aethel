@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy &amp; Ethics – Universal AI Encyclopedia</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #f0f4f8; color: #333;
+           line-height: 1.7; }
+    header { background: #1a1a2e; color: #fff; padding: 1.5rem 2rem; }
+    header h1 { font-size: 1.8rem; }
+    main { max-width: 760px; margin: 2rem auto; padding: 0 1rem; }
+    h2 { margin: 1.5rem 0 0.6rem; font-size: 1.2rem; color: #1a1a2e; }
+    p { margin-bottom: 0.8rem; }
+    ul { margin: 0 0 0.8rem 1.5rem; }
+    footer { text-align: center; padding: 1.5rem; font-size: 0.85rem; color: #888; }
+    footer a { color: #1a1a2e; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🔒 Privacy &amp; Ethics</h1>
+  </header>
+
+  <main>
+    <h2>Data We Collect</h2>
+    <p>
+      The application stores a local <code>student_profile.json</code> file on
+      your own machine. This file contains only:
+    </p>
+    <ul>
+      <li>Student level (integer)</li>
+      <li>Mastered topics (list of topic strings)</li>
+      <li>Known struggles (list of topic strings)</li>
+    </ul>
+    <p>No personally identifiable information (PII) is collected or transmitted.</p>
+
+    <h2>API Usage</h2>
+    <p>
+      Topic queries are sent to the OpenAI API using your private API key stored
+      in a local <code>.env</code> file. This key is never committed to version
+      control (see <code>.gitignore</code>). OpenAI's data usage policies apply
+      to all prompts sent through their API.
+    </p>
+
+    <h2>Age Safety Protocol</h2>
+    <p>
+      All explanations are generated with age-appropriate filtering. The system
+      prompt explicitly instructs the model to produce content suitable for the
+      stated age (5–18). Requests outside this range are rejected by the server.
+    </p>
+
+    <h2>Pedagogical Frameworks</h2>
+    <p>
+      Content is reframed using three evidence-based educational approaches:
+    </p>
+    <ul>
+      <li><strong>Singaporean Math</strong> – concrete-pictorial-abstract progression</li>
+      <li><strong>Estonian Logic</strong> – computational thinking and problem decomposition</li>
+      <li><strong>US Recovery</strong> – scaffolded support and growth-mindset framing</li>
+    </ul>
+
+    <h2>Open Source</h2>
+    <p>
+      This project is open source. You can review all source code in the
+      repository to verify data handling practices.
+    </p>
+  </main>
+
+  <footer>
+    <a href="/">Back to Dashboard</a>
+  </footer>
+</body>
+</html>
