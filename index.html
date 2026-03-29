@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Universal AI Encyclopedia</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #f0f4f8; color: #333; }
+    header { background: #1a1a2e; color: #fff; padding: 1.5rem 2rem; }
+    header h1 { font-size: 1.8rem; }
+    header p { font-size: 0.95rem; opacity: 0.8; margin-top: 0.3rem; }
+    main { max-width: 760px; margin: 2rem auto; padding: 0 1rem; }
+    .card { background: #fff; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+    label { display: block; font-weight: bold; margin-bottom: 0.4rem; }
+    input[type="text"], input[type="number"] {
+      width: 100%; padding: 0.6rem 0.8rem; border: 1px solid #ccc;
+      border-radius: 4px; font-size: 1rem; margin-bottom: 1rem;
+    }
+    button {
+      background: #1a1a2e; color: #fff; border: none;
+      padding: 0.7rem 1.6rem; border-radius: 4px; font-size: 1rem;
+      cursor: pointer;
+    }
+    button:hover { background: #16213e; }
+    #result { white-space: pre-wrap; line-height: 1.6; }
+    #model-attr { font-size: 0.8rem; color: #888; margin-top: 0.5rem; }
+    footer { text-align: center; padding: 1.5rem; font-size: 0.85rem; color: #888; }
+    footer a { color: #1a1a2e; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🌍 Universal AI Encyclopedia</h1>
+    <p>Adaptive learning powered by global pedagogical frameworks</p>
+  </header>
+
+  <main>
+    <div class="card">
+      <label for="topic">Topic</label>
+      <input type="text" id="topic" placeholder="e.g. Photosynthesis" />
+
+      <label for="age">Student Age</label>
+      <input type="number" id="age" value="12" min="5" max="18" />
+
+      <button onclick="queryTopic()">Explain</button>
+    </div>
+
+    <div class="card" id="result-card" style="display:none;">
+      <div id="result"></div>
+      <div id="model-attr"></div>
+    </div>
+
+    <div class="card" id="profile-card">
+      <h2>Student Profile</h2>
+      <div id="profile"></div>
+      <button onclick="resetProfile()" style="margin-top:1rem;background:#c0392b;">
+        Reset Profile
+      </button>
+    </div>
+  </main>
+
+  <footer>
+    <a href="/privacy">Privacy &amp; Ethics</a> &middot; Powered by GPT-4o
+  </footer>
+
+  <script>
+    async function loadProfile() {
+      const res = await fetch("/profile");
+      const data = await res.json();
+      document.getElementById("profile").innerHTML =
+        "<pre>" + JSON.stringify(data, null, 2) + "</pre>";
+    }
+
+    async function queryTopic() {
+      const topic = document.getElementById("topic").value.trim();
+      const age = parseInt(document.getElementById("age").value);
+      if (!topic) { alert("Please enter a topic."); return; }
+
+      document.getElementById("result-card").style.display = "none";
+      const res = await fetch("/query", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic, age }),
+      });
+
+      if (!res.ok) {
+        let detail = "Unknown error";
+        try { detail = (await res.json()).detail || detail; } catch (_) {}
+        alert("Error: " + detail);
+        return;
+      }
+
+      const data = await res.json();
+      document.getElementById("result").textContent = data.explanation;
+      document.getElementById("model-attr").textContent =
+        "Model: " + data.model;
+      document.getElementById("result-card").style.display = "block";
+      document.getElementById("profile").innerHTML =
+        "<pre>" + JSON.stringify(data.profile, null, 2) + "</pre>";
+    }
+
+    async function resetProfile() {
+      await fetch("/profile/reset", { method: "POST" });
+      loadProfile();
+    }
+
+    loadProfile();
+  </script>
+</body>
+</html>
