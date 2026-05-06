@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Æthel | Adaptive AI Tutor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
+
+  <header class="text-center mb-10">
+    <h1 class="text-4xl font-black tracking-tight text-slate-900">Æthel</h1>
+    <p class="text-slate-500 font-medium">Your Adaptive AI Tutor.</p>
+  </header>
+
+  <main class="w-full max-w-2xl bg-white rounded-2xl shadow-md p-8">
+    <h2 class="text-xl font-semibold text-slate-800 mb-4">Learn Something New</h2>
+
+    <div class="grid grid-cols-2 gap-3 mb-3">
+      <div class="col-span-2">
+        <label for="topicInput" class="block text-sm font-medium text-slate-600 mb-1">Topic</label>
+        <input
+          id="topicInput"
+          type="text"
+          placeholder="e.g. photosynthesis, gravity, fractions…"
+          class="w-full border border-slate-300 rounded-lg px-4 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400"
+        />
+      </div>
+      <div>
+        <label for="ageInput" class="block text-sm font-medium text-slate-600 mb-1">Age</label>
+        <input
+          id="ageInput"
+          type="number"
+          min="4"
+          max="18"
+          value="10"
+          class="w-full border border-slate-300 rounded-lg px-4 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400"
+        />
+      </div>
+      <div>
+        <label for="studentIdInput" class="block text-sm font-medium text-slate-600 mb-1">Student ID <span class="text-slate-400">(optional)</span></label>
+        <input
+          id="studentIdInput"
+          type="text"
+          placeholder="e.g. alice"
+          class="w-full border border-slate-300 rounded-lg px-4 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400"
+        />
+      </div>
+    </div>
+
+    <button
+      id="searchBtn"
+      class="w-full bg-slate-900 text-white font-semibold px-5 py-2 rounded-lg hover:bg-slate-700 transition mb-6"
+    >
+      Generate Lesson
+    </button>
+
+    <div id="status" class="text-sm text-slate-400 mb-4 hidden">Generating lesson, please wait…</div>
+
+    <div id="lessonOutput" class="hidden">
+      <h3 class="text-lg font-bold text-slate-800 mb-2" id="lessonTitle"></h3>
+      <div id="lessonContent" class="prose prose-slate max-w-none text-slate-700 whitespace-pre-wrap"></div>
+    </div>
+
+    <div id="errorOutput" class="hidden text-red-500 text-sm"></div>
+  </main>
+
+  <footer class="mt-8 text-xs text-slate-400">
+    <a href="/privacy" class="underline hover:text-slate-600">Privacy &amp; Ethics</a>
+  </footer>
+
+  <script>
+    const searchBtn = document.getElementById('searchBtn');
+    const topicInput = document.getElementById('topicInput');
+    const ageInput = document.getElementById('ageInput');
+    const studentIdInput = document.getElementById('studentIdInput');
+    const status = document.getElementById('status');
+    const lessonOutput = document.getElementById('lessonOutput');
+    const lessonTitle = document.getElementById('lessonTitle');
+    const lessonContent = document.getElementById('lessonContent');
+    const errorOutput = document.getElementById('errorOutput');
+
+    searchBtn.addEventListener('click', async () => {
+      const topic = topicInput.value.trim();
+      const age = parseInt(ageInput.value, 10);
+      const student_id = studentIdInput.value.trim() || 'anonymous';
+
+      errorOutput.classList.add('hidden');
+      errorOutput.textContent = '';
+
+      if (!topic) {
+        errorOutput.textContent = 'Please enter a topic before generating a lesson.';
+        errorOutput.classList.remove('hidden');
+        return;
+      }
+      if (!age || age < 4 || age > 18) {
+        errorOutput.textContent = 'Age must be between 4 and 18.';
+        errorOutput.classList.remove('hidden');
+        return;
+      }
+
+      status.classList.remove('hidden');
+      lessonOutput.classList.add('hidden');
+      searchBtn.disabled = true;
+
+      try {
+        const response = await fetch('/generate-lesson', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ topic, age, student_id })
+        });
+
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.detail || 'Unknown error');
+        }
+
+        const data = await response.json();
+        lessonTitle.textContent = data.topic;
+        lessonContent.textContent = data.lesson;
+        lessonOutput.classList.remove('hidden');
+      } catch (err) {
+        errorOutput.textContent = 'Error: ' + err.message;
+        errorOutput.classList.remove('hidden');
+      } finally {
+        status.classList.add('hidden');
+        searchBtn.disabled = false;
+      }
+    });
+
+    topicInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') searchBtn.click();
+    });
+  </script>
+
+</body>
+</html>
