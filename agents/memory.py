@@ -1,5 +1,5 @@
 import json
-import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from anthropic import beta_tool
 
@@ -9,7 +9,10 @@ AUDIT_PATH = Path("audit.jsonl")
 
 def _read_profile(student_id: str) -> dict:
     if PROFILES_PATH.exists():
-        data = json.loads(PROFILES_PATH.read_text())
+        try:
+            data = json.loads(PROFILES_PATH.read_text())
+        except (json.JSONDecodeError, ValueError):
+            return {}
         return data.get(student_id, {})
     return {}
 
@@ -17,7 +20,10 @@ def _read_profile(student_id: str) -> dict:
 def _write_profile(student_id: str, profile: dict) -> None:
     data: dict = {}
     if PROFILES_PATH.exists():
-        data = json.loads(PROFILES_PATH.read_text())
+        try:
+            data = json.loads(PROFILES_PATH.read_text())
+        except (json.JSONDecodeError, ValueError):
+            data = {}
     data[student_id] = profile
     PROFILES_PATH.write_text(json.dumps(data, indent=2))
 
@@ -83,7 +89,7 @@ def write_memory(student_id: str, topic: str, mastered: bool, gap_note: str = ""
     _write_profile(student_id, profile)
 
     audit_record = {
-        "ts": datetime.datetime.utcnow().isoformat() + "Z",
+        "ts": datetime.now(timezone.utc).isoformat(),
         "student_id": student_id,
         "topic": topic,
         "mastered": mastered,

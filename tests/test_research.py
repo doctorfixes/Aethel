@@ -2,7 +2,6 @@
 
 import httpx
 import respx
-import pytest
 
 from agents.research import research_topic
 
@@ -48,12 +47,31 @@ def test_404_returns_fallback():
 
 
 @respx.mock
-def test_empty_extract_returns_fallback():
+def test_500_returns_fallback():
+    respx.get(f"{WIKI_BASE}/Server_error").mock(
+        return_value=httpx.Response(500)
+    )
+    result = research_topic("Server error")
+    assert "500" in result
+    assert "general knowledge" in result
+
+
+@respx.mock
+def test_empty_extract_returns_status_code():
     respx.get(f"{WIKI_BASE}/Empty_page").mock(
         return_value=httpx.Response(200, json={"extract": ""})
     )
     result = research_topic("Empty page")
-    assert "general knowledge" not in result or "200" in result
+    assert "200" in result
+
+
+@respx.mock
+def test_missing_extract_key():
+    respx.get(f"{WIKI_BASE}/No_extract").mock(
+        return_value=httpx.Response(200, json={"title": "No extract"})
+    )
+    result = research_topic("No extract")
+    assert "200" in result
 
 
 @respx.mock
@@ -83,3 +101,34 @@ def test_topic_with_leading_trailing_spaces():
     )
     result = research_topic("  Gravity  ")
     assert "Gravity" in result
+
+
+@respx.mock
+def test_topic_with_special_characters():
+    """Topics like 'Schrödinger's cat' get space→underscore conversion."""
+    respx.get(f"{WIKI_BASE}/Schrödinger's_cat").mock(
+        return_value=httpx.Response(200, json={"extract": "A thought experiment."})
+    )
+    result = research_topic("Schrödinger's cat")
+    assert "thought experiment" in result
+
+
+@respx.mock
+def test_response_with_redirect():
+    """Wikipedia may redirect — httpx follow_redirects=True handles it."""
+    respx.get(f"{WIKI_BASE}/USA").mock(
+        return_value=httpx.Response(
+            200, json={"extract": "The United States of America."}
+        )
+    )
+    result = research_topic("USA")
+    assert "United States" in result
+
+
+@respx.mock
+def test_whitespace_only_extract_treated_as_empty():
+    respx.get(f"{WIKI_BASE}/Whitespace").mock(
+        return_value=httpx.Response(200, json={"extract": "   \n  "})
+    )
+    result = research_topic("Whitespace")
+    assert "200" in result

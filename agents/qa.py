@@ -1,3 +1,5 @@
+import re
+
 from anthropic import beta_tool
 
 
@@ -5,6 +7,11 @@ _UNSAFE_TERMS = [
     "violence", "gore", "suicide", "self-harm", "explicit", "sexual",
     "drug", "alcohol", "weapon", "kill", "murder",
 ]
+
+_UNSAFE_PATTERN = re.compile(
+    r"\b(?:" + "|".join(re.escape(t) for t in _UNSAFE_TERMS) + r")\b",
+    re.IGNORECASE,
+)
 
 _REQUIRED_SOURCE_MARKERS = ["[Source:", "wikipedia.org", "http"]
 
@@ -26,8 +33,7 @@ def validate_lesson(lesson: str, age: int) -> str:
     if not has_source:
         issues.append("No source citation found — add a [Source: ...] reference.")
 
-    lesson_lower = lesson.lower()
-    flagged = [t for t in _UNSAFE_TERMS if t in lesson_lower]
+    flagged = sorted(set(m.group().lower() for m in _UNSAFE_PATTERN.finditer(lesson)))
     if flagged:
         issues.append(f"Unsafe content detected: {', '.join(flagged)}. Remove or rephrase.")
 

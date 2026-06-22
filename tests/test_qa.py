@@ -1,5 +1,7 @@
 """Tests for agents/qa.py — lesson validation logic."""
 
+import pytest
+
 from agents.qa import validate_lesson
 
 
@@ -79,6 +81,54 @@ def test_safe_lesson_passes():
     assert "PASS" in result
 
 
+def test_substring_no_false_positive_drugstore():
+    """'drugstore' should NOT trigger the 'drug' filter (word-boundary match)."""
+    lesson = _make_lesson(extra=" I visited the drugstore today")
+    result = validate_lesson(lesson, 10)
+    assert "PASS" in result
+
+
+def test_substring_no_false_positive_killer():
+    """'killer whale' should NOT trigger the 'kill' filter."""
+    lesson = _make_lesson(extra=" The killer whale is a marine mammal")
+    result = validate_lesson(lesson, 10)
+    assert "PASS" in result
+
+
+def test_substring_no_false_positive_alcoholic():
+    """'non-alcoholic' should NOT trigger the 'alcohol' filter."""
+    lesson = _make_lesson(extra=" They served non-alcoholic beverages")
+    result = validate_lesson(lesson, 10)
+    assert "PASS" in result
+
+
+def test_standalone_unsafe_term_still_caught():
+    """The actual word 'drug' on its own must still be caught."""
+    lesson = _make_lesson(extra=" the drug was discovered in 1920")
+    result = validate_lesson(lesson, 10)
+    assert "FAIL" in result
+    assert "drug" in result
+
+
+def test_hyphenated_unsafe_term_self_harm():
+    """'self-harm' should still be caught as a complete term."""
+    lesson = _make_lesson(extra=" self-harm is dangerous")
+    result = validate_lesson(lesson, 10)
+    assert "FAIL" in result
+    assert "self-harm" in result
+
+
+@pytest.mark.parametrize("term", [
+    "violence", "gore", "suicide", "self-harm", "explicit",
+    "sexual", "drug", "alcohol", "weapon", "kill", "murder",
+])
+def test_each_unsafe_term_detected(term):
+    lesson = _make_lesson(extra=f" the topic of {term} is serious")
+    result = validate_lesson(lesson, 10)
+    assert "FAIL" in result
+    assert term in result
+
+
 # --- Age-gated length ---
 
 def test_young_learner_long_lesson_fails():
@@ -97,6 +147,19 @@ def test_young_learner_short_lesson_passes():
 def test_older_learner_long_lesson_passes():
     lesson = _make_lesson(length=1400)
     result = validate_lesson(lesson, 14)
+    assert "PASS" in result
+
+
+def test_age_boundary_8_applies_length_cap():
+    lesson = _make_lesson(length=1400)
+    result = validate_lesson(lesson, 8)
+    assert "FAIL" in result
+    assert "too long" in result
+
+
+def test_age_boundary_9_no_length_cap():
+    lesson = _make_lesson(length=1400)
+    result = validate_lesson(lesson, 9)
     assert "PASS" in result
 
 
@@ -138,9 +201,8 @@ def test_whitespace_only_lesson():
     assert "too short" in result
 
 
-def test_substring_false_positive_drug():
-    """'drug' inside 'drugstore' triggers the filter — documents current behavior."""
-    lesson = _make_lesson(extra=" I visited the drugstore today")
-    result = validate_lesson(lesson, 10)
-    assert "FAIL" in result
-    assert "drug" in result
+def test_pass_message_includes_age():
+    lesson = _make_lesson()
+    result = validate_lesson(lesson, 15)
+    assert "PASS" in result
+    assert "15" in result
